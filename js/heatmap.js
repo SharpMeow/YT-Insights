@@ -191,13 +191,13 @@
 
     // Position above progress bar scrubber area
     container.style.position = container.style.position || 'relative';
+    wrap.style.position = 'absolute';
     wrap.style.left = '0';
     wrap.style.right = '0';
     wrap.style.bottom = '100%';
     wrap.style.height = '3px';
     wrap.style.pointerEvents = 'none';
     wrap.style.zIndex = '35';
-    wrap.style.position = 'absolute';
     container.appendChild(wrap);
 
     // Draw
