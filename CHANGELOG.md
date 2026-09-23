@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.0.7 - 2026-09-22
+
+- Multi-browser: Chromium load-unpacked (Chrome, Edge, Brave, Opera, Arc) plus Firefox MV3 via `browser_specific_settings.gecko`.
+- Broader `host_permissions` for `*.youtube.com` so caption/timedtext fetches work in Firefox.
+- Restored real 16/48/128 PNG icons (48/128 were missing; 16 was corrupt base64 text).
+- Docs: install steps for Chrome, Edge, Brave, Opera, and Firefox temporary add-on.
+
 ## 1.0.6 - 2026-09-22
 
 - Theater mode: reinject after `ytd-watch-flexy` theater attribute flips so revenue/chapters/heatmap rebind.

@@ -4,16 +4,16 @@
 
 Estimated ad revenue, chapters, heatmap, and watch-page tools for YouTube.
 
-[![Chrome Manifest V3](https://img.shields.io/badge/Chrome-Manifest_V3-163f35)](manifest.json)
+[![Manifest V3](https://img.shields.io/badge/Manifest-V3-163f35)](manifest.json) [![Chrome](https://img.shields.io/badge/Chrome-supported-4285F4)](manifest.json) [![Edge](https://img.shields.io/badge/Edge-supported-0078D7)](manifest.json) [![Firefox](https://img.shields.io/badge/Firefox-MV3-FF7139)](manifest.json)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 </div>
 
-**YT Insights** is a Chrome extension that adds watch-page insights on [youtube.com](https://www.youtube.com): estimated ad revenue above the likes, auto chapters, a most-replayed heatmap, spam soft-hide, a viral views/day strip, and transcript search.
+**YT Insights** is a browser extension (Manifest V3) that adds watch-page insights on [youtube.com](https://www.youtube.com): estimated ad revenue above the likes, auto chapters, a most-replayed heatmap, spam soft-hide, a viral views/day strip, and transcript search.
 
 No account, API key, local server, or build step is needed to use it. Revenue figures are **estimates only** — heuristic RPM bands computed in your browser, not official YouTube Analytics or Creator Studio payouts.
 
-The extension uses Chrome Manifest V3 and plain JavaScript. It has no npm runtime, no background service worker in v1, and no ad blocking. It is designed to coexist with SponsorBlock and YouTube Premium.
+The extension uses Manifest V3 and plain JavaScript. Primary target is Chrome; the same package loads in other Chromium browsers and Firefox. It has no npm runtime, no background service worker in v1, and no ad blocking. It is designed to coexist with SponsorBlock and YouTube Premium.
 
 <p align="center">
   <img src="docs/readme-hero.jpg" alt="YT Insights on a YouTube watch page — estimated revenue, viral strip, chapters, heatmap, transcript search, and spam soft-hide" width="900" />
@@ -21,22 +21,38 @@ The extension uses Chrome Manifest V3 and plain JavaScript. It has no npm runtim
 
 Mockup of the watch-page UI (revenue estimate, viral strip, chapters, heatmap, transcript search, spam soft-hide). Real screenshots welcome in PRs.
 
-## Install in Chrome
+## Install
 
-1. Open the [Releases page](https://github.com/SharpMeow/yt-insights/releases) and download the latest `yt-insights-*.zip` asset when a release exists.
-2. Extract the ZIP to a permanent folder.
-3. Open `chrome://extensions`.
-4. Turn on **Developer mode**.
-5. Click **Load unpacked** and select the extracted folder containing `manifest.json`.
-6. Open any `youtube.com/watch?v=…` video and confirm the UI injects (revenue above likes on the right; viral strip under metadata; chapters and transcript near the description; heatmap above the scrub bar).
+Download the latest `yt-insights-*.zip` from [Releases](https://github.com/SharpMeow/yt-insights/releases) (or [source ZIP](https://github.com/SharpMeow/yt-insights/archive/refs/heads/main.zip) / `git clone`), extract to a **permanent** folder, then load that folder in your browser. Keep the folder — browsers load unpacked extensions from disk.
 
-Keep the extension folder in place: Chrome loads it from that location. This is an unpacked installation, not a Chrome Web Store listing.
+### Chrome (primary)
 
-For updates, replace the installed files with those from the newer release ZIP (or pull the latest source), click **Reload** on the extension card, and reload YouTube tabs.
+1. Open `chrome://extensions`.
+2. Enable **Developer mode**.
+3. **Load unpacked** → select the folder that contains `manifest.json`.
+4. Open a `youtube.com/watch?v=…` page and confirm the UI injects.
 
-### Install from source
+### Microsoft Edge
 
-If no release is listed yet, or you want the latest unreleased changes, [download the source ZIP](https://github.com/SharpMeow/yt-insights/archive/refs/heads/main.zip) instead, extract it to a permanent folder, and follow steps 3 to 6, selecting the extracted folder containing `manifest.json`. A `git clone` works the same way. The on-disk folder may still be named `yt-ad-revenue`; that does not affect Chrome as long as `manifest.json` is at the root you load.
+1. Open `edge://extensions`.
+2. Enable **Developer mode**.
+3. **Load unpacked** → same folder as above.
+
+### Brave / Opera / Arc / other Chromium
+
+Use that browser’s extensions page (`brave://extensions`, `opera://extensions`, etc.), enable Developer mode, and **Load unpacked** the same folder. Chromium browsers share the Manifest V3 package.
+
+### Firefox
+
+1. Open `about:debugging#/runtime/this-firefox`.
+2. **Load Temporary Add-on…** → select `manifest.json` inside the extracted folder.
+3. Temporary add-ons unload when Firefox restarts; reload the same way after a restart until a signed AMO build exists.
+
+Safari is not supported in this release (different packaging).
+
+### Updates
+
+Replace the folder contents with the newer release (or `git pull`), click **Reload** on the extension card (Firefox: load temporary add-on again), and refresh YouTube tabs.
 
 ## How it works
 
