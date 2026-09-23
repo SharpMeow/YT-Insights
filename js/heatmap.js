@@ -160,6 +160,7 @@
   }
 
   function removeOverlay() {
+    runToken++;
     document.getElementById(WRAP_ID)?.remove();
     document.getElementById(BADGE_ID)?.remove();
   }
@@ -190,13 +191,13 @@
 
     // Position above progress bar scrubber area
     container.style.position = container.style.position || 'relative';
-    wrap.style.position = 'absolute';
     wrap.style.left = '0';
     wrap.style.right = '0';
     wrap.style.bottom = '100%';
     wrap.style.height = '3px';
     wrap.style.pointerEvents = 'none';
     wrap.style.zIndex = '35';
+    wrap.style.position = 'absolute';
     container.appendChild(wrap);
 
     // Draw
@@ -260,18 +261,28 @@
       lastVideoId = null;
       return;
     }
-    const vid = videoId || U().getVideoId();
+    const vid = U().getVideoId() || videoId;
     if (!vid) {
       removeOverlay();
       return;
     }
 
     const token = ++runToken;
-    const pr = U().getPlayerResponse();
+    let pr = U().getPlayerResponse();
+    if (!pr || (pr.videoDetails?.videoId && pr.videoDetails.videoId !== vid)) {
+      for (let i = 0; i < 10 && token === runToken; i++) {
+        await new Promise((r) => setTimeout(r, 300));
+        if (U().getVideoId() !== vid) return;
+        pr = U().getPlayerResponse();
+        if (pr && (!pr.videoDetails?.videoId || pr.videoDetails.videoId === vid)) break;
+      }
+      if (token !== runToken) return;
+      if (!pr || (pr.videoDetails?.videoId && pr.videoDetails.videoId !== vid)) return;
+    }
 
     // Wait briefly for player chrome
     await U().waitFor(() => findProgressContainer(), { timeout: 8000 });
-    if (token !== runToken) return;
+    if (token !== runToken || U().getVideoId() !== vid) return;
 
     const native = getNativeHeat(pr);
     if (native?.nativeVisible && !native.intensities) {
