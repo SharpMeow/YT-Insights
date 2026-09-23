@@ -15,7 +15,11 @@ No account, API key, local server, or build step is needed to use it. Revenue fi
 
 The extension uses Chrome Manifest V3 and plain JavaScript. It has no npm runtime, no background service worker in v1, and no ad blocking. It is designed to coexist with SponsorBlock and YouTube Premium.
 
-_Screenshots TBD._ Add watch-page captures under `docs/` when ready (revenue chip, chapters, heatmap, spam toggle, viral strip, transcript search).
+<p align="center">
+  <img src="docs/readme-hero.jpg" alt="YT Insights on a YouTube watch page — estimated revenue, viral strip, chapters, heatmap, transcript search, and spam soft-hide" width="900" />
+</p>
+
+Mockup of the watch-page UI (revenue estimate, viral strip, chapters, heatmap, transcript search, spam soft-hide). Real screenshots welcome in PRs.
 
 ## Install in Chrome
 
