@@ -523,3 +523,12 @@ html[dark] .yti-transcript-go:hover:not(:disabled),
 .yti-spam-toggle-btn:hover {
   color: var(--yti-text-primary);
 }
+
+/* Fullscreen: hide all injected UI (player chrome owns the screen) */
+html.yti-fs-paused [class^="yti-"],
+html.yti-fs-paused [class*=" yti-"],
+html.yti-fs-paused [id^="yti-"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}

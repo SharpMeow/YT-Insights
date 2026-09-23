@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "YT Insights \u2014 Revenue, Chapters & Heatmap",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Estimated ad revenue, auto chapters, most-replayed heatmap, spam filter, viral strip, and transcript search for YouTube. Estimates only \u2014 not official YouTube data. Coexists with SponsorBlock.",
   "icons": {
     "16": "icons/icon16.png",

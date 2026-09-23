@@ -1,6 +1,7 @@
 /**
  * YT Insights — boot + SPA orchestration.
  * Coexists with SponsorBlock / YouTube Premium (no ad-block or sponsor-skip UI).
+ * Theater: reinject after layout flip. Fullscreen: hide / tear down UI until exit.
  */
 (function (global) {
   'use strict';
@@ -17,6 +18,9 @@
   let reinjectObs = null;
   let navTimers = [];
   let featureTimers = [];
+  let layoutObs = null;
+  let fsPaused = false;
+  let lastTheater = null;
 
   function clearNavTimers() {
     for (const t of navTimers) clearTimeout(t);
@@ -34,7 +38,6 @@
   }
 
   function tearDown() {
-    // Cancel staggered feature runs so they cannot reinject after SPA leave
     clearFeatureTimers();
     YTI.revenue?.removeChip?.();
     YTI.chapters?.removePanel?.();
@@ -44,12 +47,34 @@
     YTI.transcript?.removeBox?.();
   }
 
+  function setFullscreenPaused(paused) {
+    const next = !!paused;
+    if (next === fsPaused) {
+      document.documentElement.classList.toggle('yti-fs-paused', next);
+      return;
+    }
+    fsPaused = next;
+    document.documentElement.classList.toggle('yti-fs-paused', next);
+    if (next) {
+      clearActivateTimers();
+      tearDown();
+    } else if (U.isWatchPage() || U.isShortsPage()) {
+      scheduleActivate();
+    }
+  }
+
+  function syncFullscreenState() {
+    setFullscreenPaused(U.isFullscreen());
+  }
+
   /**
    * Run feature modules for the current watch page.
    * Always re-reads URL video id — never trust a closed-over id from navigate.
-   * Stagger slightly so DOM anchors exist (revenue → viral → chapters → transcript → heatmap → spam).
    */
   async function activate() {
+    syncFullscreenState();
+    if (fsPaused) return;
+
     if (!U.isWatchPage() && !U.isShortsPage()) {
       tearDown();
       activeVideoId = null;
@@ -63,66 +88,71 @@
       return;
     }
 
-    // New video → clear stale UI immediately, then populate for this id only
     if (vid !== activeVideoId) {
       tearDown();
       activeVideoId = vid;
     }
 
-    // Shorts: revenue only (compact); skip heavy watch UI
     if (U.isShortsPage() && !U.isWatchPage()) {
       YTI.revenue?.run?.(vid);
       return;
     }
 
     YTI.revenue?.run?.(vid);
-
-    // Replace prior staggered runs (e.g. second scheduleActivate tick)
     clearFeatureTimers();
 
-    // Delayed runs re-read getVideoId() so a later SPA nav cannot apply old id
     featureTimers.push(
       setTimeout(() => {
-        if (U.getVideoId() !== vid) return;
+        if (fsPaused || U.getVideoId() !== vid) return;
         YTI.viral?.run?.(U.getVideoId());
       }, 200)
     );
-
     featureTimers.push(
       setTimeout(() => {
-        if (U.getVideoId() !== vid) return;
+        if (fsPaused || U.getVideoId() !== vid) return;
         YTI.chapters?.run?.(U.getVideoId());
       }, 300)
     );
-
     featureTimers.push(
       setTimeout(() => {
-        if (U.getVideoId() !== vid) return;
+        if (fsPaused || U.getVideoId() !== vid) return;
         YTI.heatmap?.run?.(U.getVideoId());
       }, 400)
     );
-
     featureTimers.push(
       setTimeout(() => {
-        if (U.getVideoId() !== vid) return;
+        if (fsPaused || U.getVideoId() !== vid) return;
         YTI.transcript?.run?.(U.getVideoId());
       }, 600)
     );
-
     featureTimers.push(
       setTimeout(() => {
-        if (U.getVideoId() !== vid) return;
+        if (fsPaused || U.getVideoId() !== vid) return;
         YTI.spam?.run?.(U.getVideoId());
       }, 800)
     );
+  }
+
+  function ensureAllPresent() {
+    if (fsPaused || U.isFullscreen()) return;
+    if (!activeVideoId || (!U.isWatchPage() && !U.isShortsPage())) return;
+    YTI.revenue?.ensurePresent?.();
+    YTI.viral?.ensurePresent?.();
+    YTI.chapters?.ensurePresent?.();
+    YTI.transcript?.ensurePresent?.();
+    YTI.heatmap?.ensurePresent?.();
+    YTI.spam?.ensurePresent?.();
   }
 
   function setupReinjectObserver() {
     reinjectObs?.disconnect();
     reinjectObs = new MutationObserver(
       U.debounce(() => {
+        if (fsPaused || U.isFullscreen()) {
+          syncFullscreenState();
+          return;
+        }
         if (!activeVideoId || (!U.isWatchPage() && !U.isShortsPage())) return;
-        // URL changed under us — force full tearDown + activate, do not reinject stale nodes
         const current = U.getVideoId();
         if (current !== activeVideoId) {
           clearNavTimers();
@@ -131,38 +161,69 @@
           activate();
           return;
         }
-        YTI.revenue?.ensurePresent?.();
-        YTI.viral?.ensurePresent?.();
-        YTI.chapters?.ensurePresent?.();
-        YTI.transcript?.ensurePresent?.();
-        YTI.heatmap?.ensurePresent?.();
-        YTI.spam?.ensurePresent?.();
+        // Theater toggle rearranges #primary / player chrome — rebind if detached
+        const theater = U.isTheaterMode();
+        if (lastTheater === null) lastTheater = theater;
+        if (theater !== lastTheater) {
+          lastTheater = theater;
+          scheduleActivate();
+          return;
+        }
+        ensureAllPresent();
       }, 400)
     );
-    reinjectObs.observe(document.documentElement, { childList: true, subtree: true });
+    reinjectObs.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['theater', 'theater-requested_', 'fullscreen', 'class'],
+    });
+  }
+
+  function setupFullscreenListeners() {
+    const onFs = () => syncFullscreenState();
+    document.addEventListener('fullscreenchange', onFs);
+    document.addEventListener('webkitfullscreenchange', onFs);
+    // YouTube player button / 'f' key often uses class toggles before Fullscreen API
+    window.addEventListener('yt-fullscreen-change', onFs);
+    document.addEventListener('yt-action', (ev) => {
+      const name = ev?.detail?.actionName || '';
+      if (/fullscreen|theater/i.test(name)) {
+        setTimeout(() => {
+          syncFullscreenState();
+          if (!fsPaused) scheduleActivate();
+        }, 50);
+      }
+    });
+  }
+
+  function setupTheaterListener() {
+    // Attribute changes on ytd-watch-flexy are covered by reinjectObs; also poll lightly
+    // after known theater key 't' via yt-action above.
+    lastTheater = U.isTheaterMode();
   }
 
   function scheduleActivate() {
-    // Clear pending delayed feature runs from a previous navigation
     clearActivateTimers();
+    syncFullscreenState();
+    if (fsPaused) return;
 
     const urlVid = U.getVideoId();
-    // Clear UI immediately when the URL video id changed (SPA related-video click)
     if (urlVid !== activeVideoId) {
       tearDown();
-      // Keep activeVideoId null until activate assigns the new one
       activeVideoId = null;
     }
 
-    // Small delays: yt-navigate-finish often fires before player response swaps.
-    // Re-read getVideoId() inside each timeout — never close over the event id.
     navTimers.push(setTimeout(() => activate(), 150));
     navTimers.push(setTimeout(() => activate(), 1200));
   }
 
   function boot() {
     console.info('[YTI] YT Insights content script ready');
+    setupFullscreenListeners();
+    setupTheaterListener();
     setupReinjectObserver();
+    syncFullscreenState();
     U.onNavigate(() => {
       scheduleActivate();
     });

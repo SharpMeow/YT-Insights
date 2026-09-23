@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.0.6 - 2026-09-22
+
+- Theater mode: reinject after `ytd-watch-flexy` theater attribute flips so revenue/chapters/heatmap rebind.
+- Fullscreen: tear down and hide all injected UI while YouTube/browser fullscreen is active; restore on exit.
+
 ## 1.0.5 - 2026-09-22
 
 - Fixed SPA teardown races: clear revenue/viral retry timers on remove; bump async run tokens when panels/overlays/transcript boxes are removed; split nav vs feature timers so staggered runs cannot reinject after navigation.

@@ -270,6 +270,31 @@
     return () => mo.disconnect();
   }
 
+
+  /** Theater mode: wide player, metadata still below (ytd-watch-flexy[theater]). */
+  function isTheaterMode() {
+    const flexy = document.querySelector('ytd-watch-flexy');
+    if (flexy && (flexy.hasAttribute('theater') || flexy.hasAttribute('theater-requested_'))) {
+      return true;
+    }
+    return !!document.querySelector('ytd-watch-flexy[theater], ytd-watch-flexy[theater-requested_]');
+  }
+
+  /**
+   * YouTube / browser fullscreen (player or document).
+   * When true, extension UI should hide — overlays fight the player chrome.
+   */
+  function isFullscreen() {
+    if (document.fullscreenElement || document.webkitFullscreenElement) return true;
+    const flexy = document.querySelector('ytd-watch-flexy');
+    if (flexy && flexy.hasAttribute('fullscreen')) return true;
+    if (document.querySelector('ytd-app[fullscreen], ytd-watch-flexy[fullscreen]')) return true;
+    if (document.querySelector('.html5-video-player.ytp-fullscreen, #movie_player.ytp-fullscreen')) {
+      return true;
+    }
+    return false;
+  }
+
   /** Debounce helper */
   function debounce(fn, ms) {
     let t;
@@ -293,6 +318,8 @@
     isDarkTheme,
     waitFor,
     onNavigate,
+    isTheaterMode,
+    isFullscreen,
     debounce,
     extractJsonObject,
     prMatchesCurrentVideo,
