@@ -1,1 +1,1 @@
-@/workspace/js_chapters_exact.js
+PLACEHOLDER_LOAD_FROM_FILE
