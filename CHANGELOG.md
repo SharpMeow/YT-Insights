@@ -1,7 +1,12 @@
 ## [Unreleased]
 
+## [1.0.3] — 2026-09-22
+
 ### Security
 - Allowlist YouTube timedtext hosts before credentialed caption fetches.
+
+### Changed
+- Public GitHub release packaging (`scripts/pack.py`, release workflow).
 
 # Changelog
 

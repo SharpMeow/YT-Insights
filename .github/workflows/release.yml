@@ -1,0 +1,63 @@
+name: Release extension
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Version tag to create, for example v1.0.3
+        required: true
+        type: string
+permissions:
+  contents: write
+concurrency:
+  group: release-${{ inputs.tag }}
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check tag matches manifest version
+        id: version
+        run: |
+          if [[ ! "$TAG" =~ ^v[0-9]+(\.[0-9]+){0,3}$ ]]; then
+            echo "::error::Tag '$TAG' must look like v1.0.3"
+            exit 1
+          fi
+          tag_version="${TAG#v}"
+          manifest_version="$(python3 -c 'import json;print(json.load(open("manifest.json"))["version"]')"
+          if [ "$tag_version" != "$manifest_version" ]; then
+            echo "::error::Tag $TAG is $tag_version but manifest.json is $manifest_version"
+            exit 1
+          fi
+          echo "version=$tag_version" >> "$GITHUB_OUTPUT"
+      - name: Pack zip
+        run: python3 scripts/pack.py
+      - name: Confirm package
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          zip="dist/yt-insights-$VERSION.zip"
+          test -f "$zip"
+          python3 -m zipfile -l "$zip"
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          name: YT Insights ${{ steps.version.outputs.version }}
+          files: dist/yt-insights-${{ steps.version.outputs.version }}.zip
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+          body: |
+            YT Insights ${{ steps.version.outputs.version }} for Chrome (Manifest V3).
+
+            ## Install
+
+            1. Download `yt-insights-${{ steps.version.outputs.version }}.zip` below.
+            2. Unzip to a permanent folder (keep it — Chrome loads from that path).
+            3. Open `chrome://extensions` → Developer mode → **Load unpacked**.
+            4. Select the extracted `yt-insights` folder that contains `manifest.json`.
+
+            Revenue figures are **estimates only**, not official YouTube Analytics.
+
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/${{ env.TAG }}/CHANGELOG.md).
