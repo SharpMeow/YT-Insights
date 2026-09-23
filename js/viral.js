@@ -123,6 +123,9 @@
   }
 
   function removeStrip() {
+    clearTimeout(retryTimer);
+    retryTimer = null;
+    retryCount = 0;
     document.getElementById(STRIP_ID)?.remove();
   }
 
@@ -188,26 +191,39 @@
 
   function escapeHtml(s) {
     return String(s)
-      .replace(/&/g, '&')
-      .replace(/</g, '<')
-      .replace(/>/g, '>');
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
   }
 
   let retryTimer = null;
+
+  let retryCount = 0;
 
   function run(videoId) {
     if (!U().isWatchPage()) {
       removeStrip();
       lastVideoId = null;
+      retryCount = 0;
       return;
     }
-    const vid = videoId || U().getVideoId();
+    const vid = U().getVideoId() || videoId;
     if (!vid) {
       removeStrip();
       return;
     }
 
     const pr = U().getPlayerResponse();
+    // Wait for player response that matches URL — avoid DOM views from previous SPA video
+    if (!pr || (pr.videoDetails?.videoId && pr.videoDetails.videoId !== vid)) {
+      clearTimeout(retryTimer);
+      if (retryCount < 12) {
+        retryCount++;
+        retryTimer = setTimeout(() => run(vid), 400);
+      }
+      return;
+    }
+
     const views =
       (YTI.revenue && YTI.revenue.getViewCount(pr)) ||
       U().parseViewCount(pr?.videoDetails?.viewCount) ||
@@ -217,9 +233,13 @@
 
     if (!views) {
       clearTimeout(retryTimer);
-      retryTimer = setTimeout(() => run(vid), 900);
+      if (retryCount < 12) {
+        retryCount++;
+        retryTimer = setTimeout(() => run(vid), 900);
+      }
       return;
     }
+    retryCount = 0;
 
     const vpd = days ? views / days : null;
     const blurb = buildBlurb({ days, vpd });
