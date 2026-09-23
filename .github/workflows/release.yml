@@ -21,12 +21,13 @@ jobs:
       - name: Check tag matches manifest version
         id: version
         run: |
+          set -euo pipefail
           if [[ ! "$TAG" =~ ^v[0-9]+(\.[0-9]+){0,3}$ ]]; then
             echo "::error::Tag '$TAG' must look like v1.0.3"
             exit 1
           fi
           tag_version="${TAG#v}"
-          manifest_version="$(python3 -c 'import json;print(json.load(open("manifest.json"))["version"]')"
+          manifest_version="$(python3 -c "import json; print(json.load(open('manifest.json'))['version'])")"
           if [ "$tag_version" != "$manifest_version" ]; then
             echo "::error::Tag $TAG is $tag_version but manifest.json is $manifest_version"
             exit 1
@@ -38,6 +39,7 @@ jobs:
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
+          set -euo pipefail
           zip="dist/yt-insights-$VERSION.zip"
           test -f "$zip"
           python3 -m zipfile -l "$zip"
