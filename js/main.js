@@ -15,14 +15,27 @@
 
   let activeVideoId = null;
   let reinjectObs = null;
-  let activateTimers = [];
+  let navTimers = [];
+  let featureTimers = [];
+
+  function clearNavTimers() {
+    for (const t of navTimers) clearTimeout(t);
+    navTimers = [];
+  }
+
+  function clearFeatureTimers() {
+    for (const t of featureTimers) clearTimeout(t);
+    featureTimers = [];
+  }
 
   function clearActivateTimers() {
-    for (const t of activateTimers) clearTimeout(t);
-    activateTimers = [];
+    clearNavTimers();
+    clearFeatureTimers();
   }
 
   function tearDown() {
+    // Cancel staggered feature runs so they cannot reinject after SPA leave
+    clearFeatureTimers();
     YTI.revenue?.removeChip?.();
     YTI.chapters?.removePanel?.();
     YTI.heatmap?.removeOverlay?.();
@@ -64,36 +77,39 @@
 
     YTI.revenue?.run?.(vid);
 
+    // Replace prior staggered runs (e.g. second scheduleActivate tick)
+    clearFeatureTimers();
+
     // Delayed runs re-read getVideoId() so a later SPA nav cannot apply old id
-    activateTimers.push(
+    featureTimers.push(
       setTimeout(() => {
         if (U.getVideoId() !== vid) return;
         YTI.viral?.run?.(U.getVideoId());
       }, 200)
     );
 
-    activateTimers.push(
+    featureTimers.push(
       setTimeout(() => {
         if (U.getVideoId() !== vid) return;
         YTI.chapters?.run?.(U.getVideoId());
       }, 300)
     );
 
-    activateTimers.push(
+    featureTimers.push(
       setTimeout(() => {
         if (U.getVideoId() !== vid) return;
         YTI.heatmap?.run?.(U.getVideoId());
       }, 400)
     );
 
-    activateTimers.push(
+    featureTimers.push(
       setTimeout(() => {
         if (U.getVideoId() !== vid) return;
         YTI.transcript?.run?.(U.getVideoId());
       }, 600)
     );
 
-    activateTimers.push(
+    featureTimers.push(
       setTimeout(() => {
         if (U.getVideoId() !== vid) return;
         YTI.spam?.run?.(U.getVideoId());
@@ -109,6 +125,7 @@
         // URL changed under us — force full tearDown + activate, do not reinject stale nodes
         const current = U.getVideoId();
         if (current !== activeVideoId) {
+          clearNavTimers();
           tearDown();
           activeVideoId = null;
           activate();
@@ -134,13 +151,13 @@
     if (urlVid !== activeVideoId) {
       tearDown();
       // Keep activeVideoId null until activate assigns the new one
-      if (urlVid !== activeVideoId) activeVideoId = null;
+      activeVideoId = null;
     }
 
     // Small delays: yt-navigate-finish often fires before player response swaps.
     // Re-read getVideoId() inside each timeout — never close over the event id.
-    activateTimers.push(setTimeout(() => activate(), 150));
-    activateTimers.push(setTimeout(() => activate(), 1200));
+    navTimers.push(setTimeout(() => activate(), 150));
+    navTimers.push(setTimeout(() => activate(), 1200));
   }
 
   function boot() {
