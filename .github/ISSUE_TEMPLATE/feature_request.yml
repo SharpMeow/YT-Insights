@@ -1,0 +1,38 @@
+name: Feature request
+description: Suggest an improvement for YT Insights.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the problem you want solved. Prefer watch-page insights that stay compatible with SponsorBlock and YouTube Premium.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: How it should look or work on a /watch page.
+    validations:
+      required: true
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Area
+      options:
+        - Revenue estimates
+        - Chapters
+        - Heatmap
+        - Viral / velocity
+        - Transcript
+        - Spam filter
+        - UI / theming
+        - Packaging / docs
+        - Other
+  - type: input
+    id: example
+    attributes:
+      label: Public example URL (optional)

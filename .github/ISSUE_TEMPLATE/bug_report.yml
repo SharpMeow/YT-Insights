@@ -1,0 +1,65 @@
+name: Bug report
+description: Report a watch-page UI, estimate, or extension problem.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Revenue figures are **estimates only**, not YouTube Analytics.
+        Do not paste account cookies, passwords, or private tokens.
+  - type: input
+    id: version
+    attributes:
+      label: Extension and Chrome version
+      description: Extension version from chrome://extensions (e.g. 1.0.4) and Chrome version.
+      placeholder: "YT Insights 1.0.4 · Chrome 129"
+    validations:
+      required: true
+  - type: input
+    id: video_url
+    attributes:
+      label: Public video URL (optional)
+      description: A public youtube.com/watch URL that reproduces the issue. Remove any private tokens.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where did it fail?
+      multiple: true
+      options:
+        - Revenue estimate / tooltip
+        - Placement (likes / title / layout)
+        - SPA navigation (wrong video data after click)
+        - Chapters panel
+        - Heatmap
+        - Viral strip
+        - Transcript search
+        - Spam soft-hide
+        - Install / load unpacked
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: What happened?
+      description: Expected result, actual result, and steps to reproduce.
+      placeholder: |
+        1. Load unpacked …
+        2. Open …
+        3. …
+        Expected:
+        Actual:
+    validations:
+      required: true
+  - type: textarea
+    id: console
+    attributes:
+      label: Console errors (optional)
+      description: Relevant lines from DevTools Console. Redact personal data.
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I reloaded the extension and hard-refreshed the watch page.
+        - label: I understand revenue numbers are estimates, not payouts.
