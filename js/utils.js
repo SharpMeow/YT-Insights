@@ -28,9 +28,21 @@
     return /^\/shorts\//.test(location.pathname);
   }
 
+  /** True when player-response videoDetails.videoId matches the URL (or URL has no id yet). */
+  function prMatchesCurrentVideo(pr) {
+    if (!pr || !pr.videoDetails) return false;
+    const want = getVideoId();
+    if (!want) return true; // no URL id to compare
+    const got = pr.videoDetails.videoId;
+    // Require an explicit match — missing videoId is not good enough after SPA
+    return !!got && got === want;
+  }
+
   /**
    * Pull ytInitialPlayerResponse from page scripts / player API.
    * Prefer live player when available; fall back to embedded JSON.
+   * CRITICAL: never return a response for a different videoId than the URL
+   * (SPA leaves window.ytInitialPlayerResponse / inline scripts on the first video).
    */
   function getPlayerResponse() {
     try {
@@ -38,16 +50,18 @@
       for (const p of players) {
         if (p && typeof p.getPlayerResponse === 'function') {
           const pr = p.getPlayerResponse();
-          if (pr && pr.videoDetails) return pr;
+          if (pr && pr.videoDetails && prMatchesCurrentVideo(pr)) return pr;
         }
       }
     } catch (_) {}
 
     if (global.ytInitialPlayerResponse && global.ytInitialPlayerResponse.videoDetails) {
-      return global.ytInitialPlayerResponse;
+      const pr = global.ytInitialPlayerResponse;
+      if (prMatchesCurrentVideo(pr)) return pr;
+      // Stale after related-video SPA — do not fall through to this object
     }
 
-    // Scan inline scripts (SPA may have stale window var)
+    // Scan inline scripts (SPA may have stale window var AND stale script tags)
     const scripts = document.querySelectorAll('script');
     for (const s of scripts) {
       const t = s.textContent || '';
@@ -57,7 +71,7 @@
       if (eq < 0) continue;
       try {
         const json = extractJsonObject(t, eq + 1);
-        if (json && json.videoDetails) return json;
+        if (json && json.videoDetails && prMatchesCurrentVideo(json)) return json;
       } catch (_) {}
     }
     return null;
@@ -281,5 +295,6 @@
     onNavigate,
     debounce,
     extractJsonObject,
+    prMatchesCurrentVideo,
   };
 })(window);
