@@ -72,10 +72,16 @@ No Node or npm is required to load or ship the extension. Vanilla IIFE modules a
 
 ```sh
 # Syntax check (optional)
-node --check js/*.js
+for f in js/*.js; do node --check "$f"; done
+# Pack zip
+python3 scripts/pack.py
 ```
 
 Load unpacked from this folder, reload the extension card after edits, then hard-refresh or SPA-navigate between YouTube videos. Test with SponsorBlock installed when possible.
+
+Agent / LLM working notes: [AGENTS.md](AGENTS.md) and [docs/FOR_AGENTS.md](docs/FOR_AGENTS.md).
+
+Bug reports and feature requests: use the [issue templates](https://github.com/SharpMeow/yt-insights/issues/new/choose).
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), [changelog](CHANGELOG.md), and [security policy](SECURITY.md).
 
