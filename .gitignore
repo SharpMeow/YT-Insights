@@ -1,1 +1,37 @@
-# probe
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editors / IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Packaged extension builds
+*.zip
+*.crx
+*.pem
+dist/
+
+# Node (not used for runtime; ignore if present)
+node_modules/
+npm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Local Chrome / Chromium profiles used for manual testing
+chrome-profile/
+chromium-profile/
+.chrome-data/
+
+# Env / secrets (none expected)
+.env
+.env.*
+*.local
+
+# Logs
+*.log
