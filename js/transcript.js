@@ -15,6 +15,7 @@
   let status = 'idle'; // idle | loading | ready | missing
 
   function removeBox() {
+    runToken++;
     document.getElementById(BOX_ID)?.remove();
   }
 
@@ -95,10 +96,10 @@
 
   function escapeHtml(s) {
     return String(s)
-      .replace(/&/g, '&')
-      .replace(/</g, '<')
-      .replace(/>/g, '>')
-      .replace(/"/g, '"');
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 
   function highlight(text, query) {
@@ -167,13 +168,28 @@
     }
     status = 'loading';
     setStatus('Loading transcript…', 'loading');
-    const pr = U().getPlayerResponse();
     const chapters = YTI.chapters;
     if (!chapters?.fetchCaptions) {
       status = 'missing';
       cuesCache = null;
       setStatus('No transcript available', 'missing');
       return null;
+    }
+    // Wait for a player response that matches the URL video (SPA leaves stale JSON)
+    let pr = U().getPlayerResponse();
+    if (!pr || (pr.videoDetails?.videoId && pr.videoDetails.videoId !== vid)) {
+      for (let i = 0; i < 10; i++) {
+        await new Promise((r) => setTimeout(r, 300));
+        if (U().getVideoId() !== vid) return null;
+        pr = U().getPlayerResponse();
+        if (pr && (!pr.videoDetails?.videoId || pr.videoDetails.videoId === vid)) break;
+      }
+      if (!pr || (pr.videoDetails?.videoId && pr.videoDetails.videoId !== vid)) {
+        status = 'missing';
+        cuesCache = null;
+        setStatus('No transcript available', 'missing');
+        return null;
+      }
     }
     const cues = await chapters.fetchCaptions(pr);
     if (U().getVideoId() !== vid) return null;
@@ -201,7 +217,7 @@
       lastVideoId = null;
       return;
     }
-    const vid = videoId || U().getVideoId();
+    const vid = U().getVideoId() || videoId;
     if (!vid) {
       removeBox();
       return;
